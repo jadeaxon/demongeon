@@ -228,7 +228,7 @@ class World(object):
 
         self.move_deathballs()
 
-        if loc == (0, 0, 0) and (hero.inventory.contains(self.treasure)):
+        if loc == (0, 0, 0) and (self.treasure in self.hero.inventory):
             print("You escaped with the treasure.")
             print("YOU WIN!")
             exit(0)
@@ -441,7 +441,7 @@ class Hero(Lifeform):
         s = self.situation
         if s.contains(item):
             print(f"You take the {item.name}.")
-            s.remove("treasure")
+            s.remove(item)
             self.inventory.append(item)
         else:
             print(f"The {item.name} is not here.")
