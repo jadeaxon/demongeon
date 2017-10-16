@@ -4,260 +4,452 @@ from random import randint
 from sys import exit
 from textwrap import dedent
 
-world = [] # The game world.  An NxN grid of rooms.
-size = 10 # Size in rooms of one side of the world grid.
-death_balls = 3 # Number of death balls in the world.
-inventory = [] # Hero's inventory.
+class Situation(object):
+    """A situation the hero can be in.  Usually this is just being at a location."""
+    def __init__(self):
+        self.contents = [] # The things present in this situation.
+        self.world = None # The world this situation belongs to.
 
-# Populates the initial game world model.
-def init_world(size, death_balls):
-    for x in range(size):
-        row = [] 
-        for y in range(size):
-            row.append([])
-        world.append(row)
-    world[0][0].append("hero")
+    def add(self, entity):
+        """Adds an entity to this situation."""
+        # An entity can only belong to one situation at a time.
+        if entity.situation: 
+            entity.situation.remove(entity)
+        self.contents.append(entity)
+        # An entity knows what situation it belongs to.
+        # More tightly coupled.  Might be a better way to do this.
+        entity.situation = self
 
-    # We start with some number of death balls in random rooms.
-    for i in range(death_balls):
+    def remove(self, entity):
+        """Removes given entity from this situation."""
+        self.contents.remove(entity)
+
+    def contains(self, entity):
+        """Checks if given entity is part of this situation."""
+        if entity in self.contents: return True
+        return False
+
+    def containsType(self, entityType):
+        """Checks if the situation contains some type of entity."""
+        for entity in self.contents:
+            if isinstance(entity, entityType): return True
+        return False
+
+    # TO DO: Really this should be the hero describing things from his point of view.
+    # For example, if the hero can see invisibility, the world renders differently.
+    def describe(self):
+        """Describes the hero's current situation."""
+        print("You are in an abstract situation.")
+
+        print(f"You are in room {location}.")
+        describe_deathballs() 
+        describe_treasure()
+
+
+# Inheritance here is questionable.  Maybe a situation shoud have an optional location.
+class Location(Situation):
+    """A situation where the hero is in a particular location."""
+    def __init__(self):
+        super(Location, self).__init__()
+        # Each location has a 3D coordinate.
+        # x == 0 is westmost; y == 0 is northmost; z == 0 is upmost.
+        self.coordinate = (-1, -1, -1)
+
+class Room(Location):
+    """A generic dungeon room."""
+    def __init__(self):
+        super(Room, self).__init__()
+
+    def describe(self):
+        """Describes this dungeon room situation."""
+        print(f"You are in dungeon room {self.coordinate}.")
+        self.describe_deathballs() 
+        self.describe_treasure()
+    
+    def get_hero(self):
+        """Returns hero if one is in this room."""
+        for entity in self.contents:
+            if isinstance(entity, Hero):
+                return entity
+                break
+        return None
+
+    # TO DO: Extend entity percepts to z-axis.
+    # TO DO: Factor into hero class.
+    def describe_treasure(self):
+        """Describes the treasure relative to hero's current situation."""
+        hero = self.get_hero()
+        loc = self.coordinate
+        rooms = self.world.situations
+        treasure = self.world.treasure
+
+        if self.contains(treasure):
+            print("The forbidden treasure is here.")
+        else:
+            adjectives = ["", "bright", "faint"]
+            for d in [1, 2]:
+                adjective = adjectives[d]
+                try:
+                    room = rooms[(x - d, y, z)]
+                    if room.contains(treasure) and ((x - d) >= 0):
+                        print(f"A {adjective} yellow glow emanates from the west.")
+                except: pass
+                try:
+                    room = rooms[(x + d, y, z)]
+                    if room.contains(treasure):
+                        print(f"A {adjective} yellow glow emanates from the east.")
+                except: pass
+                try:
+                    room = rooms[(x, y - d, z)]
+                    if room.contains(treasure) and ((y - d) >= 0):
+                        print(f"A {adjective} yellow glow emanates from the north.")
+                except: pass
+                try:
+                    room = rooms[(x, y + d, z)]
+                    if room.contains(treasure):
+                        print(f"A {adjective} yellow glow emanates from the south.")
+                except: pass
+
+    # TO DO: Extend entity percepts to z-axis.
+    # TO DO: Factor into hero class.
+    def describe_deathballs(self):
+        """Describes each death ball relative to current hero location."""
+        hero = self.get_hero()
+        loc = self.coordinate
+        rooms = self.world.situations
+        treasure = self.world.treasure
+        
+        if self.containsType(DeathBall.__class__):
+            print("A deadly death ball is here to kill you!")
+        else:
+            adjectives = ["", "strong", "pale"]
+            for d in [1, 2]:
+                adjective = adjectives[d]
+                try:
+                    room = rooms[(x - d, y, z)]
+                    if room.containsType(DeathBall.__class__) and ((x - d) >= 0):
+                        print(f"A {adjective} blue glow emanates from the west.")
+                except: pass
+                try:
+                    room = rooms[(x + d, y, z)]
+                    if room.containsType(DeathBall.__class__):
+                        print(f"A {adjective} blue glow emanates from the east.")
+                except: pass
+                try:
+                    room = rooms[(x, y - d, z)]
+                    if room.containsType(DeathBall.__class__) and ((y - d) >= 0):
+                        print(f"A {adjective} blue glow emanates from the north.")
+                except: pass
+                try:
+                    room = rooms[(x, y + d, z)]
+                    if room.containsType(DeathBall.__class__):
+                        print(f"A {adjective} blue glow emanates from the south.")
+                except: pass
+
+
+class World(object):
+    """The game world consists of all the situations the hero can find himself in."""
+    def __init__(self):
+        """Initialize the game world.""" 
+        # Mostly the situations are dungeon rooms forming an NxNxN cube.
+        self.situations = {}
+        self.size = 10
+        self.initial_death_balls = 3 # TO DO: Generalize this more.
+        self.treasure = None
+        self.hero = None
+
+        # Populate the world with dungeon rooms.
+        for x in range(self.size):
+            for y in range(self.size):
+                for z in range(self.size):
+                    coordinate = (x, y, z)
+                    room = Room()
+                    room.coordinate = coordinate
+                    self.situations[coordinate] = room
+                    room.world = self
+
+        # Start the hero at (0, 0, 0)
+        c = (0, 0, 0)
+        starting_situation = self.situations[c]
+        self.hero = Hero()
+        starting_situation.add(self.hero)
+        self._init_enemies()
+        self._init_items()
+        
+    def _init_enemies(self):
+        """Populates the game world with enemies."""
+        # We start with some number of death balls in random rooms.
+        for i in range(self.initial_death_balls):
+            while True:
+                x = randint(0, self.size - 1)
+                y = randint(0, self.size - 1)
+                z = randint(0, self.size - 1)
+                c = (x, y, z)
+                print(f"x = {x}; y = {y}; z = {z}") 
+                # Don't start with a death ball in the starting room.
+                situation = self.situations[c]
+                if situation.contains(self.hero):
+                    continue
+                else:
+                    deathball = DeathBall()
+                    situation.add(deathball)
+                    break
+
+    def _init_items(self):
+        """Populates the game world with items."""
+        # PRE: Hero has been created and placed in game world.
+        # Now place the treasure.
         while True:
-            x = randint(0, size - 1)
-            y = randint(0, size - 1)
-            # print(f"x = {x}; y = {y}") 
-            # Don't start with a death ball in the starting room.
-            room = world[x][y]
-            # print(room)
-            if "hero" in room: 
+            x = randint(0, self.size - 1)
+            y = randint(0, self.size - 1)
+            z = randint(0, self.size - 1)
+            c = (x, y, z)
+            print(f"Placing treasure at ({x},{y},{z}).") 
+            # Don't start with the treasure in the starting room.
+            situation = self.situations[c]
+            if situation.contains(self.hero): 
                 continue
             else:
-                world[x][y].append("death ball")
+                self.treasure = Treasure()
+                situation.add(self.treasure)
                 break
 
-    # Now place the treasure.
-    while True:
-        x = randint(0, size - 1)
-        y = randint(0, size - 1)
-        # print(f"x = {x}; y = {y}") 
-        # Don't start with a death ball in the starting room.
-        room = world[x][y]
-        # print(room)
-        if "hero" in room: 
-            continue
+    def update(self):
+        """Updates the game world after hero acts in response to current situation."""
+        loc = self.hero.situation.coordinate
+        situation = self.situations(loc)
+        if situation.containsType(DeathBall.__class__):
+            print("A blazing blue death ball hurls itself toward you, killing you on impact.")
+            print("YOU LOSE!")
+            exit(0)
         else:
-            world[x][y].append("treasure")
-            break
+            pass
 
-# Returns the location of the hero in the dungeon as an (x, y) tuple.
-def get_hero_location():
-    for x in range(size):
-        for y in range(size):
-            room = world[x][y]
-            if "hero" in room:
-                return (x, y)
-    # Should throw some kind of exception.
-    return (-1, -1)
+        self.move_deathballs()
 
+        if loc == (0, 0, 0) and (hero.inventory.contains(self.treasure)):
+            print("You escaped with the treasure.")
+            print("YOU WIN!")
+            exit(0)
 
-# Moves the hero one room north if possible.
-def go_north():
-    loc = get_hero_location()
-    x = loc[0]
-    y = loc[1]
-    y -= 1
-    if (y >= 0):
-        world[x][y + 1].remove("hero")
-        world[x][y].append("hero")
-    else:
-        print("I can't go any farther north.")
+    # TO DO: Just iterate thru list of entities rather than all rooms/situations.
+    def move_deathballs(self):
+        """Moves each death ball."""
+        size = self.size
+        rooms = self.situations
+        for x in range(size):
+            for y in range(size):
+                for z in range(size):
+                    room = rooms[(x, y, z)]
+                    for entity in room.contents:
+                        if isinstance(entity, Enemy):
+                            entity.act()
 
-# Moves the hero one room east if possible.
-def go_east():
-    loc = get_hero_location()
-    x = loc[0]
-    y = loc[1]
-    x += 1
-    if (x < size):
-        world[x - 1][y].remove("hero")
-        world[x][y].append("hero")
-    else:
-        print("I can't go any farther east.")
-
-# Moves the hero one room south if possible.
-def go_south():
-    loc = get_hero_location()
-    x = loc[0]
-    y = loc[1]
-    y += 1
-    if (y < size):
-        world[x][y - 1].remove("hero")
-        world[x][y].append("hero")
-    else:
-        print("I can't go any farther south.")
-
-# Moves the hero one room west if possible.
-def go_west():
-    loc = get_hero_location()
-    x = loc[0]
-    y = loc[1]
-    x -= 1
-    if (x >= 0):
-        world[x + 1][y].remove("hero")
-        world[x][y].append("hero")
-    else:
-        print("I can't go any farther west.")
-
-# Describes room at given location.  Assumes the hero is in that room.
-def describe_room(location):
-    print(f"You are in room {location}.")
-    describe_deathballs() 
-    describe_treasure()
-
-# Takes the treasure.
-def take_treasure():
-    loc = get_hero_location()
-    x, y = loc
-    room = world[x][y]
-    if "treasure" in room:
-        print("You take the treasure.")
-        world[x][y].remove("treasure")
-        inventory.append("treasure")
-    else:
-        print("The treasure is not here.")
-
-# Describes the treasure relative to current hero location.
-def describe_treasure():
-    loc = get_hero_location()
-    x, y = loc
-    room = world[x][y]
-    if "treasure" in room:
-        print("The forbidden treasure is here.")
-    else:
-        adjectives = ["", "bright", "faint"]
-        for d in [1, 2]:
-            adjective = adjectives[d]
-            try:
-                room = world[x - d][y]
-                if "treasure" in room and ((x - d) >= 0):
-                    print(f"A {adjective} yellow glow emanates from the west.")
-            except: pass
-            try:
-                room = world[x + d][y]
-                if "treasure" in room:
-                    print(f"A {adjective} yellow glow emanates from the east.")
-            except: pass
-            try:
-                room = world[x][y - d]
-                if "treasure" in room and ((y - d) >= 0):
-                    print(f"A {adjective} yellow glow emanates from the north.")
-            except: pass
-            try:
-                room = world[x][y + d]
-                if "treasure" in room:
-                    print(f"A {adjective} yellow glow emanates from the south.")
-            except: pass
+    def start(self):
+        """Starts the game world in action."""
+        while True:
+            hero = self.hero
+            situation = self.hero.situation
+            situation.describe()
+            action = input(f"{situation.coordinate}> ")
+            action = action.strip()
+            if action == "":
+                print("You wait for a while.")
+            elif action == "help":
+                help() # Looks like we're overriding a builtin.
+            elif action in "nN":
+                hero.go_north()
+            elif action in "eE":
+                hero.go_east()
+            elif action in "sS":
+                hero.go_south()
+            elif action in "wW":
+                hero.go_west()
+            elif "treasure" in action:
+                hero.take(self.treasure)
+            elif action == "cheat":
+                print("Cheating is not implemented.")
+            elif action == "exit" or action == "quit":
+                break
+            else:
+                print(f"I don't know how to '{action}'.")
+            self.update()
 
 
-# Describes each death ball relative to current hero location.
-def describe_deathballs():
-    loc = get_hero_location()
-    x, y = loc
-    room = world[x][y]
-    if "death ball" in room:
-        print("A deadly death ball is here to kill you!")
-    else:
-        adjectives = ["", "strong", "pale"]
-        for d in [1, 2]:
-            adjective = adjectives[d]
-            try:
-                room = world[x - d][y]
-                if "death ball" in room and ((x - d) >= 0):
-                    print(f"A {adjective} blue glow emanates from the west.")
-            except: pass
-            try:
-                room = world[x + d][y]
-                if "death ball" in room:
-                    print(f"A {adjective} blue glow emanates from the east.")
-            except: pass
-            try:
-                room = world[x][y - d]
-                if "death ball" in room and ((y - d) >= 0):
-                    print(f"A {adjective} blue glow emanates from the north.")
-            except: pass
-            try:
-                room = world[x][y + d]
-                if "death ball" in room:
-                    print(f"A {adjective} blue glow emanates from the south.")
-            except: pass
+class Entity(object):
+    """Something that has physical manifestation in the game."""
+    def __init__(self):
+        print("Creating Entity.") 
+        self.weight = 0 # In pounds.
+        self.situation = None        
+            
+class Item(Entity):
+    """An inanimate item."""
+    def __init__(self):
+        super(Item, self).__init__() 
+
+class Treasure(Item):
+    """The forbidden treasure."""
+    def __init__(self):
+        super(Treasure, self).__init__() 
+        self.weight = 25
+        self.color = "golden"
+        self.name = "treasure"
+
+class Lifeform(Entity):
+    """A living entity in the game."""
+    def __init__(self):
+        super(Lifeform, self).__init__() 
+        print("Creating Lifeform.")
+        self.strength = 1
+
+    def carrying_capacity(self):
+        """Reports the carrying capacity of this lifeform."""
+        return self.strength * 20
+
+    def weight_carried(self):
+        """Tells how much weight this lifeform is carrying."""
+        carried = 0
+        for item in self.inventory:
+            carried += item.weight
+        return carried
+
+class Enemy(Lifeform):
+    def __init__(self):
+        super(Enemy, self).__init__() 
+        
+    """A lifeform that is trying to kill or otherwise thwart our hero."""
+
+class DeathBall(Enemy):
+    """A slow, randomly-moving, glowing ball of death."""
+    def __init__(self):
+        super(DeathBall, self).__init__() 
+        self.weight = 0
+        self.color = "blue"
+    
+    def act(self):
+        """Causes a death ball to act."""
+        self.move()
+
+    def move(self):
+        """Causes a death ball to move."""
+        room = world[x][y]
+        if "hero" in room:
+            print("A blazing blue death ball hurls itself toward you, killing you on impact.")
+            print("YOU LOSE!")
+            exit(0)
+
+        ## print(f"Moving death ball from ({x}, {y})", end=' ')
+        direction = randint(0, 3)
+        if direction == 0: # N
+            if (y >= 1):
+                world[x][y].remove("death ball")
+                y -= 1
+                world[x][y].append("death ball (moved)")
+        elif direction == 1: # E
+            if (x < (size - 1)):
+                world[x][y].remove("death ball")
+                x += 1
+                world[x][y].append("death ball (moved)")
+        elif direction == 2: # S
+            if (y < (size - 1)):
+                world[x][y].remove("death ball")
+                y += 1
+                world[x][y].append("death ball (moved)")
+        elif direction == 3: # W
+            if (x >= 1):
+                world[x][y].remove("death ball")
+                x -= 1
+                world[x][y].append("death ball (moved)")
+        else:
+            print(f"ERROR: Unexpected direction: {direction}.")
+
+        ## print(f"to ({x}, {y}).")
 
 
-# Updates the game world.
-def update_world():
-    loc = get_hero_location()
-    x, y = loc
-    room = world[x][y]
-    if "death ball" in room:
-        print("A blazing blue death ball hurls itself toward you, killing you on impact.")
-        print("YOU LOSE!")
-        exit(0)
-    else:
-        pass
+class Hero(Lifeform):
+    """The protagonist of this story."""
+    def __init__(self):
+        super(Hero, self).__init__() 
+        print("Creating Hero.")
+        self.inventory = []
 
-    move_deathballs()
-    if (x == 0) and (y == 0) and ("treasure" in inventory):
-        print("You escaped with the treasure.")
-        print("YOU WIN!")
-        exit(0)
+    def get_location(self):
+        """Returns the location of the hero in the dungeon as an (x, y, z) tuple."""
+        if isinstance(self.situation, Location):
+            return self.situation.coordinate
+        else:
+            return (-1, -1, -1)
 
-# Moves each death ball.
-def move_deathballs():
-    for x in range(size):
-        for y in range(size):
-            room = world[x][y]
-            if "death ball" in room:
-                move_deathball(x, y)
+    def get_world(self):
+        """Returns the world this hero is part of."""
+        return self.situation.world
 
-    for x in range(size):
-        for y in range(size):
-            room = world[x][y]
-            if "death ball (moved)" in room:
-                world[x][y].remove("death ball (moved)")
-                world[x][y].append("death ball")
+    def go_north(self):
+        """ Moves the hero one room north if possible. """
+        loc = self.get_location()
+        world = self.get_world()
+        x = loc[0]
+        y = loc[1]
+        z = loc[2]
+        y -= 1
+        if (y >= 0):
+            world.situations[(x, y + 1, z)].remove(self)
+            world.situations[(x, y, z)].add(self)
+        else:
+            print("I can't go any farther north.")
 
+    def go_east(self):
+        """ Moves the hero one room east if possible. """
+        loc = self.get_location()
+        world = self.get_world()
+        x = loc[0]
+        y = loc[1]
+        z = loc[2]
+        x += 1
+        if (x < world.size):
+            world.situations[(x - 1, y, z)].remove(self)
+            world.situations[(x, y, z)].add(self)
+        else:
+            print("I can't go any farther east.")
 
-# Moves a particular death ball.
-def move_deathball(x, y):
-    room = world[x][y]
-    if "hero" in room:
-        print("A blazing blue death ball hurls itself toward you, killing you on impact.")
-        print("YOU LOSE!")
-        exit(0)
+    # TO DO:
+    # Moves the hero one room south if possible.
+    def go_south(self):
+        loc = get_hero_location()
+        x = loc[0]
+        y = loc[1]
+        y += 1
+        if (y < size):
+            world[x][y - 1].remove("hero")
+            world[x][y].append("hero")
+        else:
+            print("I can't go any farther south.")
 
-    ## print(f"Moving death ball from ({x}, {y})", end=' ')
-    direction = randint(0, 3)
-    if direction == 0: # N
-        if (y >= 1):
-            world[x][y].remove("death ball")
-            y -= 1
-            world[x][y].append("death ball (moved)")
-    elif direction == 1: # E
-        if (x < (size - 1)):
-            world[x][y].remove("death ball")
-            x += 1
-            world[x][y].append("death ball (moved)")
-    elif direction == 2: # S
-        if (y < (size - 1)):
-            world[x][y].remove("death ball")
-            y += 1
-            world[x][y].append("death ball (moved)")
-    elif direction == 3: # W
-        if (x >= 1):
-            world[x][y].remove("death ball")
-            x -= 1
-            world[x][y].append("death ball (moved)")
-    else:
-        print(f"ERROR: Unexpected direction: {direction}.")
+    # TO DO:
+    # Moves the hero one room west if possible.
+    def go_west():
+        loc = get_hero_location()
+        x = loc[0]
+        y = loc[1]
+        x -= 1
+        if (x >= 0):
+            world[x + 1][y].remove("hero")
+            world[x][y].append("hero")
+        else:
+            print("I can't go any farther west.")
 
-    ## print(f"to ({x}, {y}).")
+    def take(self, item):
+        """Attempts to take an item for the hero."""
+        s = self.situation 
+        if s.contains(item):
+            print(f"You take the {item.name}.")
+            s.remove("treasure")
+            self.inventory.append(item)
+        else:
+            print(f"The {item.name} is not here.")
+
+# end class Hero
 
 
 def help():
