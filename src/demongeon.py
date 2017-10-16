@@ -266,6 +266,10 @@ class World(object):
                 hero.go_south()
             elif action in "wW":
                 hero.go_west()
+            elif action in "uU":
+                hero.go_up()
+            elif action in "dD":
+                hero.go_down()
             elif "treasure" in action:
                 hero.take(self.treasure)
             elif action == "cheat":
@@ -436,6 +440,29 @@ class Hero(Lifeform):
         else:
             print("I can't go any farther west.")
 
+    def go_down(self):
+        """Moves the hero one room down if possible."""
+        loc = self.get_location()
+        world = self.get_world()
+        x, y, z = loc
+        z += 1
+        if (z < world.size):
+            world.situations[(x, y, z)].add(self)
+        else:
+            print("I can't go any farther down.")
+
+    def go_up(self):
+        """Moves the hero one room up if possible."""
+        loc = self.get_location()
+        world = self.get_world()
+        x, y, z = loc
+        z -= 1
+        if (z >= 0):
+            world.situations[(x, y, z)].add(self)
+        else:
+            print("I can't go any farther up.")
+
+
     def take(self, item):
         """Attempts to take an item for the hero."""
         s = self.situation
@@ -466,6 +493,8 @@ def help():
     e - go east
     s - go south
     w - go west
+    d - go down
+    u - go up
     <Enter> - wait a turn
     """
     msg = dedent(msg).strip()
