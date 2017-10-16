@@ -184,6 +184,17 @@ class TeleporterRoom(Room):
         else:
             return False
 
+class TreasureRoom(Room):
+    """Special room where the forbidden treasure is initially located."""
+    def __init__(self):
+        super(TreasureRoom, self).__init__()
+        self.location_type = "treasure room"
+
+    # TO DO: Make this more of a template method so everything gets described in the right order.
+    def describe(self):
+        super(TreasureRoom, self).describe()
+        print("The walls, floor, and ceiling of this room all sparkle.")
+
 
 class World(object):
     """The game world consists of all the situations the hero can find himself in."""
@@ -252,8 +263,13 @@ class World(object):
             if situation.contains(self.hero):
                 continue
             else:
+                # Replace normal dungeon room with special treasure room.
                 self.treasure = Treasure()
+                self.situations[c] = TreasureRoom()
+                situation = self.situations[c]
                 situation.add(self.treasure)
+                situation.coordinate = c
+                situation.world = self
                 break
 
     def update(self):
