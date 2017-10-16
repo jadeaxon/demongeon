@@ -22,7 +22,7 @@ class Situation(object):
 
     def remove(self, entity):
         """Removes given entity from this situation."""
-        print(self.contents)
+        ## print(self.contents)
         self.contents.remove(entity)
 
     def contains(self, entity):
@@ -41,10 +41,6 @@ class Situation(object):
     def describe(self):
         """Describes the hero's current situation."""
         print("You are in an abstract situation.")
-
-        print(f"You are in room {location}.")
-        describe_deathballs()
-        describe_treasure()
 
 
 # Inheritance here is questionable.  Maybe a situation shoud have an optional location.
@@ -75,12 +71,11 @@ class Room(Location):
                 break
         return None
 
-    # TO DO: Extend entity percepts to z-axis.
     # TO DO: Factor into hero class.
     def describe_treasure(self):
         """Describes the treasure relative to hero's current situation."""
         hero = self.get_hero()
-        loc = self.coordinate
+        x, y, z = self.coordinate
         rooms = self.world.situations
         treasure = self.world.treasure
 
@@ -110,13 +105,23 @@ class Room(Location):
                     if room.contains(treasure):
                         print(f"A {adjective} yellow glow emanates from the south.")
                 except: pass
+                try:
+                    room = rooms[(x, y, z - d)]
+                    if room.contains(treasure) and ((z - d) >= 0):
+                        print(f"A {adjective} yellow glow emanates from above.")
+                except: pass
+                try:
+                    room = rooms[(x, y, z + d)]
+                    if room.contains(treasure):
+                        print(f"A {adjective} yellow glow emanates from below.")
+                except: pass
 
     # TO DO: Extend entity percepts to z-axis.
     # TO DO: Factor into hero class.
     def describe_deathballs(self):
         """Describes each death ball relative to current hero location."""
         hero = self.get_hero()
-        loc = self.coordinate
+        x, y, z = self.coordinate
         rooms = self.world.situations
         treasure = self.world.treasure
 
