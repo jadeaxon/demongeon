@@ -235,12 +235,16 @@ class World(object):
 
         # Make sure items know when they have been moved.
         for item in self.hero.inventory:
-            item.situation = hero.situation
+            item.situation = self.hero.situation
 
         if loc == (0, 0, 0) and (self.treasure in self.hero.inventory):
             print("You escaped with the treasure.")
             print("YOU WIN!")
             exit(0)
+
+        # Reset the action flag so entities will be able to do something next turn.
+        for entity in Entity.entities:
+            entity.acted = False
 
     # TO DO: Just iterate thru list of entities rather than all rooms/situations.
     def move_deathballs(self):
