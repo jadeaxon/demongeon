@@ -425,7 +425,7 @@ class Hero(Lifeform):
         else:
             print("I can't go any farther south.")
 
-    def go_west():
+    def go_west(self):
         """Moves the hero one room west if possible."""
         loc = self.get_location()
         world = self.get_world()
