@@ -482,7 +482,7 @@ def help():
     Your goal is to get the treasure and leave the dungeon without dying.
     The treasure is put in a random location in the dungeon at the start of each game.
     When you find the treasure, type 'take treasure' to take it.
-    Once you have the treasure, make your way back to location (0, 0).
+    Once you have the treasure, make your way back to location (0, 0, 0).
     If you do that without dying, you win the game!
 
     Other commands:
