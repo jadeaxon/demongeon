@@ -13,7 +13,7 @@ class Situation(object):
     def add(self, entity):
         """Adds an entity to this situation."""
         # An entity can only belong to one situation at a time.
-        if entity.situation: 
+        if entity.situation:
             entity.situation.remove(entity)
         self.contents.append(entity)
         # An entity knows what situation it belongs to.
@@ -22,6 +22,7 @@ class Situation(object):
 
     def remove(self, entity):
         """Removes given entity from this situation."""
+        print(self.contents)
         self.contents.remove(entity)
 
     def contains(self, entity):
@@ -42,7 +43,7 @@ class Situation(object):
         print("You are in an abstract situation.")
 
         print(f"You are in room {location}.")
-        describe_deathballs() 
+        describe_deathballs()
         describe_treasure()
 
 
@@ -63,9 +64,9 @@ class Room(Location):
     def describe(self):
         """Describes this dungeon room situation."""
         print(f"You are in dungeon room {self.coordinate}.")
-        self.describe_deathballs() 
+        self.describe_deathballs()
         self.describe_treasure()
-    
+
     def get_hero(self):
         """Returns hero if one is in this room."""
         for entity in self.contents:
@@ -118,7 +119,7 @@ class Room(Location):
         loc = self.coordinate
         rooms = self.world.situations
         treasure = self.world.treasure
-        
+
         if self.containsType(DeathBall.__class__):
             print("A deadly death ball is here to kill you!")
         else:
@@ -150,7 +151,7 @@ class Room(Location):
 class World(object):
     """The game world consists of all the situations the hero can find himself in."""
     def __init__(self):
-        """Initialize the game world.""" 
+        """Initialize the game world."""
         # Mostly the situations are dungeon rooms forming an NxNxN cube.
         self.situations = {}
         self.size = 10
@@ -175,7 +176,7 @@ class World(object):
         starting_situation.add(self.hero)
         self._init_enemies()
         self._init_items()
-        
+
     def _init_enemies(self):
         """Populates the game world with enemies."""
         # We start with some number of death balls in random rooms.
@@ -185,7 +186,7 @@ class World(object):
                 y = randint(0, self.size - 1)
                 z = randint(0, self.size - 1)
                 c = (x, y, z)
-                print(f"x = {x}; y = {y}; z = {z}") 
+                print(f"x = {x}; y = {y}; z = {z}")
                 # Don't start with a death ball in the starting room.
                 situation = self.situations[c]
                 if situation.contains(self.hero):
@@ -204,10 +205,10 @@ class World(object):
             y = randint(0, self.size - 1)
             z = randint(0, self.size - 1)
             c = (x, y, z)
-            print(f"Placing treasure at ({x},{y},{z}).") 
+            print(f"Placing treasure at ({x},{y},{z}).")
             # Don't start with the treasure in the starting room.
             situation = self.situations[c]
-            if situation.contains(self.hero): 
+            if situation.contains(self.hero):
                 continue
             else:
                 self.treasure = Treasure()
@@ -217,7 +218,7 @@ class World(object):
     def update(self):
         """Updates the game world after hero acts in response to current situation."""
         loc = self.hero.situation.coordinate
-        situation = self.situations(loc)
+        situation = self.situations[loc]
         if situation.containsType(DeathBall.__class__):
             print("A blazing blue death ball hurls itself toward you, killing you on impact.")
             print("YOU LOSE!")
@@ -279,19 +280,30 @@ class World(object):
 class Entity(object):
     """Something that has physical manifestation in the game."""
     def __init__(self):
-        print("Creating Entity.") 
+        print("Creating Entity.")
         self.weight = 0 # In pounds.
-        self.situation = None        
-            
+        self.situation = None
+        self.acted = False # Has this entity taken its action this turn?
+
+    def get_world(self):
+        return self.situation.world
+
+    def get_location(self):
+        """Returns the location of the entity in the game world as an (x, y, z) tuple."""
+        if isinstance(self.situation, Location):
+            return self.situation.coordinate
+        else:
+            return (-1, -1, -1)
+
 class Item(Entity):
     """An inanimate item."""
     def __init__(self):
-        super(Item, self).__init__() 
+        super(Item, self).__init__()
 
 class Treasure(Item):
     """The forbidden treasure."""
     def __init__(self):
-        super(Treasure, self).__init__() 
+        super(Treasure, self).__init__()
         self.weight = 25
         self.color = "golden"
         self.name = "treasure"
@@ -299,7 +311,7 @@ class Treasure(Item):
 class Lifeform(Entity):
     """A living entity in the game."""
     def __init__(self):
-        super(Lifeform, self).__init__() 
+        super(Lifeform, self).__init__()
         print("Creating Lifeform.")
         self.strength = 1
 
@@ -316,70 +328,65 @@ class Lifeform(Entity):
 
 class Enemy(Lifeform):
     def __init__(self):
-        super(Enemy, self).__init__() 
-        
+        super(Enemy, self).__init__()
+
     """A lifeform that is trying to kill or otherwise thwart our hero."""
 
 class DeathBall(Enemy):
     """A slow, randomly-moving, glowing ball of death."""
     def __init__(self):
-        super(DeathBall, self).__init__() 
+        super(DeathBall, self).__init__()
         self.weight = 0
         self.color = "blue"
-    
+
     def act(self):
         """Causes a death ball to act."""
-        self.move()
+        if not self.acted:
+            self.move()
+            self.acted = True
 
     def move(self):
         """Causes a death ball to move."""
-        room = world[x][y]
-        if "hero" in room:
+        room = self.situation
+        world = self.get_world()
+        size = world.size
+        rooms = world.situations
+
+        # If the hero is at our location, kill him.
+        if room.contains(world.hero):
             print("A blazing blue death ball hurls itself toward you, killing you on impact.")
             print("YOU LOSE!")
             exit(0)
 
-        ## print(f"Moving death ball from ({x}, {y})", end=' ')
-        direction = randint(0, 3)
+        # Randomly move the death ball.
+        loc = self.get_location()
+        x, y, z = loc
+        ## print(f"Moving death ball from ({x}, {y}, {z})", end=' ')
+        direction = randint(0, 3) # TO DO: Add z axis.
         if direction == 0: # N
             if (y >= 1):
-                world[x][y].remove("death ball")
-                y -= 1
-                world[x][y].append("death ball (moved)")
+                rooms[(x, y - 1, z)].add(self)
         elif direction == 1: # E
             if (x < (size - 1)):
-                world[x][y].remove("death ball")
-                x += 1
-                world[x][y].append("death ball (moved)")
+                rooms[(x + 1, y, z)].add(self)
         elif direction == 2: # S
             if (y < (size - 1)):
-                world[x][y].remove("death ball")
-                y += 1
-                world[x][y].append("death ball (moved)")
+                rooms[(x, y + 1, z)].add(self)
         elif direction == 3: # W
             if (x >= 1):
-                world[x][y].remove("death ball")
-                x -= 1
-                world[x][y].append("death ball (moved)")
+                rooms[(x - 1, y, z)].add(self)
         else:
             print(f"ERROR: Unexpected direction: {direction}.")
 
-        ## print(f"to ({x}, {y}).")
+        ## print(f"to ({x}, {y}, {z}).")
 
 
 class Hero(Lifeform):
     """The protagonist of this story."""
     def __init__(self):
-        super(Hero, self).__init__() 
+        super(Hero, self).__init__()
         print("Creating Hero.")
         self.inventory = []
-
-    def get_location(self):
-        """Returns the location of the hero in the dungeon as an (x, y, z) tuple."""
-        if isinstance(self.situation, Location):
-            return self.situation.coordinate
-        else:
-            return (-1, -1, -1)
 
     def get_world(self):
         """Returns the world this hero is part of."""
@@ -394,7 +401,7 @@ class Hero(Lifeform):
         z = loc[2]
         y -= 1
         if (y >= 0):
-            world.situations[(x, y + 1, z)].remove(self)
+            # world.situations[(x, y + 1, z)].remove(self)
             world.situations[(x, y, z)].add(self)
         else:
             print("I can't go any farther north.")
@@ -408,7 +415,7 @@ class Hero(Lifeform):
         z = loc[2]
         x += 1
         if (x < world.size):
-            world.situations[(x - 1, y, z)].remove(self)
+            # world.situations[(x - 1, y, z)].remove(self)
             world.situations[(x, y, z)].add(self)
         else:
             print("I can't go any farther east.")
@@ -441,7 +448,7 @@ class Hero(Lifeform):
 
     def take(self, item):
         """Attempts to take an item for the hero."""
-        s = self.situation 
+        s = self.situation
         if s.contains(item):
             print(f"You take the {item.name}.")
             s.remove("treasure")
@@ -456,7 +463,7 @@ def help():
     """Prints out the help message."""
     msg = """
     Your goal is to get the treasure and leave the dungeon without dying.
-    The treasure is put in a random location in the dungeon at the start of each game. 
+    The treasure is put in a random location in the dungeon at the start of each game.
     When you find the treasure, type 'take treasure' to take it.
     Once you have the treasure, make your way back to location (0, 0).
     If you do that without dying, you win the game!
