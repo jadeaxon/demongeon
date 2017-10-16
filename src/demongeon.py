@@ -396,12 +396,9 @@ class Hero(Lifeform):
         """ Moves the hero one room north if possible. """
         loc = self.get_location()
         world = self.get_world()
-        x = loc[0]
-        y = loc[1]
-        z = loc[2]
+        x, y, z = loc
         y -= 1
         if (y >= 0):
-            # world.situations[(x, y + 1, z)].remove(self)
             world.situations[(x, y, z)].add(self)
         else:
             print("I can't go any farther north.")
@@ -410,39 +407,32 @@ class Hero(Lifeform):
         """ Moves the hero one room east if possible. """
         loc = self.get_location()
         world = self.get_world()
-        x = loc[0]
-        y = loc[1]
-        z = loc[2]
+        x, y, z = loc
         x += 1
         if (x < world.size):
-            # world.situations[(x - 1, y, z)].remove(self)
             world.situations[(x, y, z)].add(self)
         else:
             print("I can't go any farther east.")
 
-    # TO DO:
-    # Moves the hero one room south if possible.
     def go_south(self):
-        loc = get_hero_location()
-        x = loc[0]
-        y = loc[1]
+        """Moves the hero one room south if possible."""
+        loc = self.get_location()
+        world = self.get_world()
+        x, y, z = loc
         y += 1
-        if (y < size):
-            world[x][y - 1].remove("hero")
-            world[x][y].append("hero")
+        if (y < world.size):
+            world.situations[(x, y, z)].add(self)
         else:
             print("I can't go any farther south.")
 
-    # TO DO:
-    # Moves the hero one room west if possible.
     def go_west():
-        loc = get_hero_location()
-        x = loc[0]
-        y = loc[1]
+        """Moves the hero one room west if possible."""
+        loc = self.get_location()
+        world = self.get_world()
+        x, y, z = loc
         x -= 1
         if (x >= 0):
-            world[x + 1][y].remove("hero")
-            world[x][y].append("hero")
+            world.situations[(x, y, z)].add(self)
         else:
             print("I can't go any farther west.")
 
