@@ -233,6 +233,10 @@ class World(object):
 
         self.move_deathballs()
 
+        # Make sure items know when they have been moved.
+        for item in self.hero.inventory:
+            item.situation = hero.situation
+
         if loc == (0, 0, 0) and (self.treasure in self.hero.inventory):
             print("You escaped with the treasure.")
             print("YOU WIN!")
@@ -278,7 +282,8 @@ class World(object):
             elif "treasure" in action:
                 hero.take(self.treasure)
             elif action == "cheat":
-                print("Cheating is not implemented.")
+                for e in Entity.entities:
+                    e.debug()
             elif action == "exit" or action == "quit":
                 break
             else:
@@ -288,11 +293,14 @@ class World(object):
 
 class Entity(object):
     """Something that has physical manifestation in the game."""
+    entities = []
+
     def __init__(self):
         print("Creating Entity.")
         self.weight = 0 # In pounds.
         self.situation = None
         self.acted = False # Has this entity taken its action this turn?
+        Entity.entities.append(self)
 
     def get_world(self):
         return self.situation.world
@@ -303,6 +311,10 @@ class Entity(object):
             return self.situation.coordinate
         else:
             return (-1, -1, -1)
+
+    def debug(self):
+        print(f"I am a {self.__class__.__name__} at {self.situation.coordinate}.")
+
 
 class Item(Entity):
     """An inanimate item."""
@@ -493,7 +505,7 @@ def help():
     Other commands:
     help - print this help message
     exit - exit the game
-    cheat - show the game world state
+    cheat - show useful game world state info
     n - go north
     e - go east
     s - go south
