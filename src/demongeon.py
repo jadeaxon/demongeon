@@ -178,7 +178,7 @@ class TeleporterRoom(Room):
         size = self.world.size
         if action == "teleport":
             print("You magically teleport to another location.")
-            loc = (randint(0, size), randint(0, size), randint(0, size))
+            loc = (randint(0, size - 1), randint(0, size - 1), randint(0, size - 1))
             self.world.situations[loc].add(self.world.hero)
             return True
         else:
@@ -203,7 +203,7 @@ class World(object):
         # Mostly the situations are dungeon rooms forming an NxNxN cube.
         self.situations = {}
         self.size = 10
-        self.initial_death_balls = 3 # TO DO: Generalize this more.
+        self.initial_death_balls = 100 # TO DO: Generalize this more.
         self.treasure = None
         self.hero = None
 
@@ -213,7 +213,7 @@ class World(object):
                 for z in range(self.size):
                     room = None
                     coordinate = (x, y, z)
-                    if coordinate == (1, 1, 1):
+                    if (x == y == z != 0):
                         room = TeleporterRoom()
                     else:
                         room = Room()
