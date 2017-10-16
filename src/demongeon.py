@@ -275,6 +275,7 @@ class World(object):
                 print("You wait for a while.")
             elif action == "help":
                 help() # Looks like we're overriding a builtin.
+                continue
             elif action in "nN":
                 hero.go_north()
             elif action in "eE":
@@ -292,6 +293,7 @@ class World(object):
             elif action == "cheat":
                 for e in Entity.entities:
                     e.debug()
+                continue
             elif action == "exit" or action == "quit":
                 break
             else:
