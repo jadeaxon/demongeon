@@ -31,9 +31,10 @@ class Situation(object):
         return False
 
     def containsType(self, entityType):
-        """Checks if the situation contains some type of entity."""
+        """Checks if the situation contains some exact type of entity."""
         for entity in self.contents:
-            if isinstance(entity, entityType): return True
+            ## print(f"{entity.__class__} == {entityType}")
+            if entity.__class__ == entityType: return True
         return False
 
     # TO DO: Really this should be the hero describing things from his point of view.
@@ -125,7 +126,9 @@ class Room(Location):
         rooms = self.world.situations
         treasure = self.world.treasure
 
-        if self.containsType(DeathBall.__class__):
+        ## print(f"{globals()['DeathBall']}")
+
+        if self.containsType(DeathBall):
             print("A deadly death ball is here to kill you!")
         else:
             adjectives = ["", "strong", "pale"]
@@ -133,22 +136,22 @@ class Room(Location):
                 adjective = adjectives[d]
                 try:
                     room = rooms[(x - d, y, z)]
-                    if room.containsType(DeathBall.__class__) and ((x - d) >= 0):
+                    if room.containsType(DeathBall) and ((x - d) >= 0):
                         print(f"A {adjective} blue glow emanates from the west.")
                 except: pass
                 try:
                     room = rooms[(x + d, y, z)]
-                    if room.containsType(DeathBall.__class__):
+                    if room.containsType(DeathBall):
                         print(f"A {adjective} blue glow emanates from the east.")
                 except: pass
                 try:
                     room = rooms[(x, y - d, z)]
-                    if room.containsType(DeathBall.__class__) and ((y - d) >= 0):
+                    if room.containsType(DeathBall) and ((y - d) >= 0):
                         print(f"A {adjective} blue glow emanates from the north.")
                 except: pass
                 try:
                     room = rooms[(x, y + d, z)]
-                    if room.containsType(DeathBall.__class__):
+                    if room.containsType(DeathBall):
                         print(f"A {adjective} blue glow emanates from the south.")
                 except: pass
 
@@ -224,7 +227,7 @@ class World(object):
         """Updates the game world after hero acts in response to current situation."""
         loc = self.hero.situation.coordinate
         situation = self.situations[loc]
-        if situation.containsType(DeathBall.__class__):
+        if situation.containsType(DeathBall):
             print("A blazing blue death ball hurls itself toward you, killing you on impact.")
             print("YOU LOSE!")
             exit(0)
@@ -264,6 +267,7 @@ class World(object):
         while True:
             hero = self.hero
             situation = self.hero.situation
+            print()
             situation.describe()
             action = input(f"{situation.coordinate}> ")
             action = action.strip()
