@@ -4,6 +4,8 @@ from random import randint
 from sys import exit
 from textwrap import dedent
 
+version = (0, 0, 1) # Game version.
+
 class Situation(object):
     """A situation the hero can be in.  Usually this is just being at a location."""
     def __init__(self):
@@ -194,7 +196,7 @@ class World(object):
                 y = randint(0, self.size - 1)
                 z = randint(0, self.size - 1)
                 c = (x, y, z)
-                print(f"x = {x}; y = {y}; z = {z}")
+                ## print(f"x = {x}; y = {y}; z = {z}")
                 # Don't start with a death ball in the starting room.
                 situation = self.situations[c]
                 if situation.contains(self.hero):
@@ -213,7 +215,7 @@ class World(object):
             y = randint(0, self.size - 1)
             z = randint(0, self.size - 1)
             c = (x, y, z)
-            print(f"Placing treasure at ({x},{y},{z}).")
+            ## print(f"Placing treasure at ({x},{y},{z}).")
             # Don't start with the treasure in the starting room.
             situation = self.situations[c]
             if situation.contains(self.hero):
@@ -306,7 +308,7 @@ class Entity(object):
     entities = []
 
     def __init__(self):
-        print("Creating Entity.")
+        ## print("Creating Entity.")
         self.weight = 0 # In pounds.
         self.situation = None
         self.acted = False # Has this entity taken its action this turn?
@@ -343,7 +345,7 @@ class Lifeform(Entity):
     """A living entity in the game."""
     def __init__(self):
         super(Lifeform, self).__init__()
-        print("Creating Lifeform.")
+        ## print("Creating Lifeform.")
         self.strength = 1
 
     def carrying_capacity(self):
@@ -416,7 +418,7 @@ class Hero(Lifeform):
     """The protagonist of this story."""
     def __init__(self):
         super(Hero, self).__init__()
-        print("Creating Hero.")
+        ## print("Creating Hero.")
         self.inventory = []
 
     def get_world(self):

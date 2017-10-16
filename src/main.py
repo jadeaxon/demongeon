@@ -11,7 +11,8 @@ except:
     sys.exit(1)
 
 # Play the game.
-print("Welcome to Demongeon!")
+major, minor, patch = version
+print(f"Welcome to Demongeon v{major}.{minor}.{patch}!")
 print("Try to find the treasure and escape without being killed.")
 world = World()
 world.start()
