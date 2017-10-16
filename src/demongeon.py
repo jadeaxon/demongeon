@@ -45,6 +45,11 @@ class Situation(object):
         """Describes the hero's current situation."""
         print("You are in an abstract situation.")
 
+    # This allows us to make the action parser/interpreter context-sensitive.
+    def handle_hero_action(self, action):
+        """Overrides default action handling.  Returns True if it does."""
+        return False
+
 
 # Inheritance here is questionable.  Maybe a situation shoud have an optional location.
 class Location(Situation):
@@ -54,15 +59,17 @@ class Location(Situation):
         # Each location has a 3D coordinate.
         # x == 0 is westmost; y == 0 is northmost; z == 0 is upmost.
         self.coordinate = (-1, -1, -1)
+        self.location_type = "location"
 
 class Room(Location):
     """A generic dungeon room."""
     def __init__(self):
         super(Room, self).__init__()
+        self.location_type = "dungeon room"
 
     def describe(self):
         """Describes this dungeon room situation."""
-        print(f"You are in dungeon room {self.coordinate}.")
+        print(f"You are in a {self.location_type} at {self.coordinate}.")
         self.describe_deathballs()
         self.describe_treasure()
 
@@ -157,6 +164,26 @@ class Room(Location):
                         print(f"A {adjective} blue glow emanates from the south.")
                 except: pass
 
+class TeleporterRoom(Room):
+    """This is a special teleporter room.  You can teleport to another random location."""
+    def __init__(self):
+        super(TeleporterRoom, self).__init__()
+        self.location_type = "teleporter"
+
+    def describe(self):
+        super(TeleporterRoom, self).describe()
+        print("This is a teleporter room.  Try teleporting.")
+
+    def handle_hero_action(self, action):
+        size = self.world.size
+        if action == "teleport":
+            print("You magically teleport to another location.")
+            loc = (randint(0, size), randint(0, size), randint(0, size))
+            self.world.situations[loc].add(self.world.hero)
+            return True
+        else:
+            return False
+
 
 class World(object):
     """The game world consists of all the situations the hero can find himself in."""
@@ -173,8 +200,12 @@ class World(object):
         for x in range(self.size):
             for y in range(self.size):
                 for z in range(self.size):
+                    room = None
                     coordinate = (x, y, z)
-                    room = Room()
+                    if coordinate == (1, 1, 1):
+                        room = TeleporterRoom()
+                    else:
+                        room = Room()
                     room.coordinate = coordinate
                     self.situations[coordinate] = room
                     room.world = self
@@ -273,33 +304,37 @@ class World(object):
             situation.describe()
             action = input(f"{situation.coordinate}> ")
             action = action.strip()
-            if action == "":
-                print("You wait for a while.")
-            elif action == "help":
-                help() # Looks like we're overriding a builtin.
-                continue
-            elif action in "nN":
-                hero.go_north()
-            elif action in "eE":
-                hero.go_east()
-            elif action in "sS":
-                hero.go_south()
-            elif action in "wW":
-                hero.go_west()
-            elif action in "uU":
-                hero.go_up()
-            elif action in "dD":
-                hero.go_down()
-            elif "treasure" in action:
-                hero.take(self.treasure)
-            elif action == "cheat":
-                for e in Entity.entities:
-                    e.debug()
-                continue
-            elif action == "exit" or action == "quit":
-                break
-            else:
-                print(f"I don't know how to '{action}'.")
+
+            if situation.handle_hero_action(action):
+                pass
+            else: # Default action handling.
+                if action == "":
+                    print("You wait for a while.")
+                elif action == "help":
+                    help() # Looks like we're overriding a builtin.
+                    continue
+                elif action in "nN":
+                    hero.go_north()
+                elif action in "eE":
+                    hero.go_east()
+                elif action in "sS":
+                    hero.go_south()
+                elif action in "wW":
+                    hero.go_west()
+                elif action in "uU":
+                    hero.go_up()
+                elif action in "dD":
+                    hero.go_down()
+                elif "treasure" in action:
+                    hero.take(self.treasure)
+                elif action == "cheat":
+                    for e in Entity.entities:
+                        e.debug()
+                    continue
+                elif action == "exit" or action == "quit":
+                    break
+                else:
+                    print(f"I don't know how to '{action}'.")
             self.update()
 
 
