@@ -4,7 +4,7 @@ from random import randint
 from sys import exit
 from textwrap import dedent
 
-version = (0, 0, 1) # Game version.
+version = (0, 0, 2) # Game version.
 
 class Situation(object):
     """A situation the hero can be in.  Usually this is just being at a location."""
