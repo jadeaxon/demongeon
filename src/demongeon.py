@@ -446,19 +446,31 @@ class DeathBall(Enemy):
         loc = self.get_location()
         x, y, z = loc
         ## print(f"Moving death ball from ({x}, {y}, {z})", end=' ')
-        direction = randint(0, 3) # TO DO: Add z axis.
+        direction = randint(0, 5)
         if direction == 0: # N
             if (y >= 1):
-                rooms[(x, y - 1, z)].add(self)
+                y -= 1
+                rooms[(x, y, z)].add(self)
         elif direction == 1: # E
             if (x < (size - 1)):
-                rooms[(x + 1, y, z)].add(self)
+                x += 1
+                rooms[(x, y, z)].add(self)
         elif direction == 2: # S
             if (y < (size - 1)):
-                rooms[(x, y + 1, z)].add(self)
+                y += 1
+                rooms[(x, y, z)].add(self)
         elif direction == 3: # W
             if (x >= 1):
-                rooms[(x - 1, y, z)].add(self)
+                x -= 1
+                rooms[(x, y, z)].add(self)
+        elif direction == 4: # D
+            if (z < (size - 1)):
+                z += 1
+                rooms[(x, y, z)].add(self)
+        elif direction == 5: # U
+            if (z >= 1):
+                z -= 1
+                rooms[(x, y, z)].add(self)
         else:
             print(f"ERROR: Unexpected direction: {direction}.")
 
