@@ -20,7 +20,7 @@ from random import randint
 from sys import exit
 from textwrap import dedent
 
-version = (0, 0, 2) # Game version.
+version = (0, 0, 3) # Game version.
 
 class Situation(object):
     """A situation the hero can be in.  Usually this is just being at a location."""
@@ -50,12 +50,20 @@ class Situation(object):
         if entity in self.contents: return True
         return False
 
+    # TO DO: Use _ names.
     def containsType(self, entityType):
         """Check if the `Situation` contains some exact type of `Entity`."""
         for entity in self.contents:
             ## print(f"{entity.__class__} == {entityType}")
             if entity.__class__ == entityType: return True
         return False
+
+    def get_entities(self, entity_type):
+        """Return a list of all entities in this situation of the given type."""
+        entities = []
+        for entity in self.contents:
+            if entity.__class__ == entity_type: entities.append(entity)
+        return entities
 
     # TO DO: Really this should be the hero describing things from his point of view.
     # For example, if the hero can see invisibility, the world renders differently.
@@ -163,32 +171,45 @@ class Room(Location):
 
         ## print(f"{globals()['DeathBall']}")
 
+        # TO DO: There could be more than one.  Would be nice to know their color too.
         if self.containsType(DeathBall):
             print("A deadly death ball is here to kill you!")
         else:
-            adjectives = ["", "strong", "pale"]
-            for d in [1, 2]:
-                adjective = adjectives[d]
-                try:
-                    room = rooms[(x - d, y, z)]
-                    if room.containsType(DeathBall) and ((x - d) >= 0):
-                        print(f"A {adjective} blue glow emanates from the west.")
-                except: pass
-                try:
-                    room = rooms[(x + d, y, z)]
-                    if room.containsType(DeathBall):
-                        print(f"A {adjective} blue glow emanates from the east.")
-                except: pass
-                try:
-                    room = rooms[(x, y - d, z)]
-                    if room.containsType(DeathBall) and ((y - d) >= 0):
-                        print(f"A {adjective} blue glow emanates from the north.")
-                except: pass
-                try:
-                    room = rooms[(x, y + d, z)]
-                    if room.containsType(DeathBall):
-                        print(f"A {adjective} blue glow emanates from the south.")
-                except: pass
+            for distance in [1, 2]:
+                for direction in ['n', 'e', 's', 'w', 'u', 'd']:
+                    self._describe_deathballs_at(self.coordinate, direction, distance)
+
+    def _describe_deathballs_at(self, location, direction, distance):
+        """Describe a death ball at given direction and distance from hero's POV at given location."""
+        rooms = self.world.situations
+        adjectives = ["", "strong", "pale"]
+        adjective = adjectives[distance]
+        if direction in ['n', 'w', 'u']: distance *= -1
+        dir2axis = {'n': 'y', 's': 'y', 'e': 'x', 'w': 'x', 'u': 'z', 'd': 'z'} # Yeah, superfluous.
+        axis = dir2axis[direction]
+        dir2desc = {
+            'n': 'the north', 's': 'the south', 'e': 'the east', 'w': 'the west',
+            'u': 'above', 'd': 'below'
+         }
+        direction = dir2desc[direction]
+        axis2index = {'x': 0, 'y': 1, 'z': 2} # Index into coord tuple.
+        index = axis2index[axis]
+        percept_coord = list(location) # The location we will perceive.
+        percept_coord[index] += distance
+        ## print(f"Percept at {tuple(percept_coord)}.")
+
+        # If percept coordinate is within the game bounds, then render each death ball in that room.
+        try:
+            room = rooms[tuple(percept_coord)]
+            deathballs = room.get_entities(DeathBall)
+            if deathballs and (percept_coord[index] >= 0):
+                for deathball in deathballs:
+                    print(f"A {adjective} {deathball.color} glow emanates from {direction}.")
+        except BaseException as e:
+            # Coordinate out of bounds on positive side.
+            ## print(e)
+            pass
+
 
 class TeleporterRoom(Room):
     """This is a special teleporter room.  You can teleport to another random location."""
@@ -282,6 +303,11 @@ class World(object):
                     continue
                 else:
                     deathball = DeathBall()
+                    # Make some of death balls yellow (same glow as treasure).
+                    # Not all that glitters is gold.
+                    r = randint(0, 9)
+                    if r in [0, 1, 2]:
+                        deathball.color = "yellow"
                     situation.add(deathball)
                     break
 
@@ -314,8 +340,9 @@ class World(object):
         loc = self.hero.situation.coordinate
         situation = self.situations[loc]
         # TO DO: Use a Death situation.
-        if situation.containsType(DeathBall):
-            print("A blazing blue death ball hurls itself toward you, killing you on impact.")
+        deathballs = situation.get_entities(DeathBall)
+        if deathballs:
+            print(f"A blazing {deathballs[0].color} death ball hurls itself toward you, killing you on impact.")
             print("YOU LOSE!")
             exit(0)
         else:
@@ -467,7 +494,7 @@ class DeathBall(Enemy):
     def __init__(self):
         super(DeathBall, self).__init__()
         self.weight = 0
-        self.color = "blue"
+        self.color = "purple"
 
     def act(self):
         """Cause a death ball to act."""
@@ -489,7 +516,7 @@ class DeathBall(Enemy):
         # If the hero is at our location, kill him.
         # TO DO: Create Death situation.
         if room.contains(world.hero):
-            print("A blazing blue death ball hurls itself toward you, killing you on impact.")
+            print("A blazing {self.color} death ball hurls itself toward you, killing you on impact.")
             print("YOU LOSE!")
             exit(0)
 
