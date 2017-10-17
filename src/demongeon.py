@@ -109,6 +109,7 @@ class Room(Location):
         return None
 
     # TO DO: Factor into hero class.
+    # PRE: There's only one treasure in the game.
     def describe_treasure(self):
         """Describe the treasure relative to hero's current situation.
 
@@ -116,49 +117,50 @@ class Room(Location):
         seen at a distance by the hero.  The range may depend on the hero's level of
         perception at the time.
         """
-        hero = self.get_hero()
-        x, y, z = self.coordinate
-        rooms = self.world.situations
-        treasure = self.world.treasure
-
-        if self.contains(treasure):
+        if self.contains(self.world.treasure):
             print("The forbidden treasure is here.")
         else:
-            # TO DO: This is very repetitive.  Can it be factored down?
-            # Also, it's essentially the same code as the death ball glow rendering.
-            adjectives = ["", "bright", "faint"]
-            for d in [1, 2]:
-                adjective = adjectives[d]
-                try:
-                    room = rooms[(x - d, y, z)]
-                    if room.contains(treasure) and ((x - d) >= 0):
-                        print(f"A {adjective} yellow glow emanates from the west.")
-                except: pass
-                try:
-                    room = rooms[(x + d, y, z)]
-                    if room.contains(treasure):
-                        print(f"A {adjective} yellow glow emanates from the east.")
-                except: pass
-                try:
-                    room = rooms[(x, y - d, z)]
-                    if room.contains(treasure) and ((y - d) >= 0):
-                        print(f"A {adjective} yellow glow emanates from the north.")
-                except: pass
-                try:
-                    room = rooms[(x, y + d, z)]
-                    if room.contains(treasure):
-                        print(f"A {adjective} yellow glow emanates from the south.")
-                except: pass
-                try:
-                    room = rooms[(x, y, z - d)]
-                    if room.contains(treasure) and ((z - d) >= 0):
-                        print(f"A {adjective} yellow glow emanates from above.")
-                except: pass
-                try:
-                    room = rooms[(x, y, z + d)]
-                    if room.contains(treasure):
-                        print(f"A {adjective} yellow glow emanates from below.")
-                except: pass
+            for distance in [1, 2]:
+                for direction in ['n', 'e', 's', 'w', 'u', 'd']:
+                    self._describe_treasure_at(self.coordinate, direction, distance)
+
+    # TO DO: The code for rendering two different entities (death balls and treasures) is
+    # essentially the same.  Refactor it into a single describe_entity() method.
+    # Might need to add state to entities as to whether they glow and perhaps how brightly.
+    # The combination of hero's perception and attributes of the entity itself then combine to
+    # form the actual percept observed by the hero.
+    def _describe_treasure_at(self, location, direction, distance):
+        treasure = self.world.treasure
+        rooms = self.world.situations
+        # TO DO: More mixing up things madlibs style to make game more interesting.
+        adjectives = [("", ""), ("bright", "strong"), ("pale", "faint")]
+        adjective_choice = adjectives[distance]
+        adjective = adjective_choice[randint(0, len(adjective_choice) - 1)]
+        if direction in ['n', 'w', 'u']: distance *= -1
+        dir2axis = {'n': 'y', 's': 'y', 'e': 'x', 'w': 'x', 'u': 'z', 'd': 'z'} # Yeah, superfluous.
+        axis = dir2axis[direction]
+        dir2desc = {
+            'n': 'the north', 's': 'the south', 'e': 'the east', 'w': 'the west',
+            'u': 'above', 'd': 'below'
+         }
+        direction = dir2desc[direction]
+        axis2index = {'x': 0, 'y': 1, 'z': 2} # Index into coord tuple.
+        index = axis2index[axis]
+        percept_coord = list(location) # The location we will perceive.
+        percept_coord[index] += distance
+        ## print(f"Percept at {tuple(percept_coord)}.")
+
+        # If percept coordinate is within the game bounds, then render each treasure in that room.
+        try:
+            room = rooms[tuple(percept_coord)]
+            treasures = room.get_entities(Treasure)
+            if treasures and (percept_coord[index] >= 0):
+                for treasure in treasures:
+                    print(f"A {adjective} {treasure.color} glow emanates from {direction}.")
+        except BaseException as e:
+            # Coordinate out of bounds on positive side.
+            ## print(e)
+            pass
 
     # TO DO: Extend entity percepts to z-axis.
     # TO DO: Factor into hero class.
@@ -303,11 +305,11 @@ class World(object):
                     continue
                 else:
                     deathball = DeathBall()
-                    # Make some of death balls yellow (same glow as treasure).
+                    # Make some of death balls golden (same glow as treasure).
                     # Not all that glitters is gold.
                     r = randint(0, 9)
                     if r in [0, 1, 2]:
-                        deathball.color = "yellow"
+                        deathball.color = "golden"
                     situation.add(deathball)
                     break
 
