@@ -12,9 +12,12 @@ except:
 
 # Play the game.
 major, minor, patch = version
-print(f"Welcome to Demongeon v{major}.{minor}.{patch}!")
-print("Try to find the treasure and escape without being killed.")
-world = World()
-world.start()
+while True:
+    print(f"Welcome to Demongeon v{major}.{minor}.{patch}!")
+    print("Try to find the treasure and escape without being killed.")
+    world = World()
+    should_restart = world.start()
+    if not should_restart: break
+
 
 

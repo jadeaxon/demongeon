@@ -379,8 +379,10 @@ class World(object):
             situation = self.hero.situation
             print()
             situation.describe()
+            # TO DO: Use readline for input to get history, etc.
             action = input(f"{situation.coordinate}> ")
             action = action.strip()
+            should_restart = False # Should we restart the game?
 
             # TO DO: Model the idea of turns, time, activations more explicitly.
             # This would allow modeling of creatures more like the mechanics of Zombicide
@@ -416,10 +418,15 @@ class World(object):
                     continue
                 elif action == "exit" or action == "quit":
                     break
+                elif action == "restart" or "new game":
+                    should_restart = True
+                    print('\n' * 30) # Poor man's clear screen.
+                    break
                 else:
                     print(f"I don't know how to '{action}'.")
             self.update()
-
+        # next hero command
+        return should_restart
 
 class Entity(object):
     """Something that has physical manifestation in the game."""
@@ -656,6 +663,7 @@ def help():
     help - print this help message
     exit - exit the game
     cheat - show useful game world state info
+    restart - restart the game
     n - go north
     e - go east
     s - go south
