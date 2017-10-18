@@ -91,6 +91,23 @@ class Death(Situation):
         print("How did you reach this code anyway?")
         return True
 
+class Victory(Situation):
+    """The elusive goal of victory."""
+    def __init__(self, reason):
+        super(Victory, self).__init__()
+        self.reason = reason
+
+    def describe(self):
+        print(self.reason)
+        print("YOU WIN!")
+        exit(0)
+
+    @classmethod
+    def achieved(self, world):
+        if world.situations[(0, 0, 0)].contains_type(Hero):
+            if world.treasure in world.hero.inventory:
+                return True
+        return False
 
 # Inheritance here is questionable.  Maybe a situation shoud have an optional location.
 class Location(Situation):
@@ -370,11 +387,11 @@ class World(object):
         for item in self.hero.inventory:
             item.situation = self.hero.situation
 
-        # TO DO: Use a Victory situation.
-        if loc == (0, 0, 0) and (self.treasure in self.hero.inventory):
-            print("You escaped with the treasure.")
-            print("YOU WIN!")
-            exit(0)
+        if Victory.achieved(self):
+            reason = "You escaped with the treasure."
+            victory = Victory(reason)
+            self.situations[(-1, -1, -1)] = victory
+            victory.add(self.hero)
 
         # Reset the action flag so entities will be able to do something next turn.
         for entity in Entity.entities:
