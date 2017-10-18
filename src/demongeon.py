@@ -73,6 +73,25 @@ class Situation(object):
         """Override default action handling.  Returns True if it does."""
         return False
 
+
+class Death(Situation):
+    """The unfortunate situation of being dead.  Our hero ends up in this predicament often."""
+    def __init__(self, reason):
+        super(Death, self).__init__()
+        self.reason = reason
+
+    def describe(self):
+        print(f"{self.reason}")
+        print("You are completely dead, not mostly dead.")
+        print("YOU LOSE!")
+        exit(0)
+
+    def handle_hero_action(self, action):
+        print("You can't do anything: you're dead!")
+        print("How did you reach this code anyway?")
+        return True
+
+
 # Inheritance here is questionable.  Maybe a situation shoud have an optional location.
 class Location(Situation):
     """A `Situation` where the `Hero` is in a particular location."""
@@ -336,12 +355,12 @@ class World(object):
         """Update the game world after hero acts in response to current situation."""
         loc = self.hero.situation.coordinate
         situation = self.situations[loc]
-        # TO DO: Use a Death situation.
         deathballs = situation.get_entities(DeathBall)
         if deathballs:
-            print(f"A blazing {deathballs[0].color} death ball hurls itself toward you, killing you on impact.")
-            print("YOU LOSE!")
-            exit(0)
+            reason = f"A blazing {deathballs[0].color} death ball hurls itself toward you, killing you on impact."
+            death = Death(reason)
+            death.add(self.hero)
+            self.situations[(-1, -1, -1)] = death
         else:
             pass
 
@@ -519,11 +538,12 @@ class DeathBall(Enemy):
         rooms = world.situations
 
         # If the hero is at our location, kill him.
-        # TO DO: Create Death situation.
         if room.contains(world.hero):
-            print("A blazing {self.color} death ball hurls itself toward you, killing you on impact.")
-            print("YOU LOSE!")
-            exit(0)
+            reason = f"A blazing {self.color} death ball hurls itself toward you, killing you on impact."
+            death = Death(reason)
+            death.add(world.hero)
+            world.situations[(-1, -1, -1)] = death
+            return # You're dead!
 
         # Randomly move the death ball.
         loc = self.get_location()
