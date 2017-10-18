@@ -51,11 +51,11 @@ class Situation(object):
         return False
 
     # TO DO: Use _ names.
-    def containsType(self, entityType):
+    def contains_type(self, entity_type):
         """Check if the `Situation` contains some exact type of `Entity`."""
         for entity in self.contents:
-            ## print(f"{entity.__class__} == {entityType}")
-            if entity.__class__ == entityType: return True
+            ## print(f"{entity.__class__} == {entity_type}")
+            if entity.__class__ == entity_type: return True
         return False
 
     def get_entities(self, entity_type):
@@ -174,7 +174,7 @@ class Room(Location):
         ## print(f"{globals()['DeathBall']}")
 
         # TO DO: There could be more than one.  Would be nice to know their color too.
-        if self.containsType(DeathBall):
+        if self.contains_type(DeathBall):
             print("A deadly death ball is here to kill you!")
         else:
             for distance in [1, 2]:
