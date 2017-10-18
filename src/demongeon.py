@@ -20,7 +20,7 @@ from random import randint
 from sys import exit
 from textwrap import dedent
 
-version = (0, 0, 3) # Game version.
+version = (0, 0, 4) # Game version.
 
 class Situation(object):
     """A situation the hero can be in.  Usually this is just being at a location."""
@@ -384,6 +384,7 @@ class World(object):
             # TO DO: Use readline for input to get history, etc.
             action = input(f"{situation.coordinate}> ")
             action = action.strip()
+            action = action.lower() # Is this always valid?
             should_restart = False # Should we restart the game?
 
             # TO DO: Model the idea of turns, time, activations more explicitly.
@@ -400,17 +401,17 @@ class World(object):
                 elif action == "help":
                     help() # Looks like we're overriding a builtin.
                     continue
-                elif action in "nN":
+                elif action in ["n", "north"]:
                     hero.go_north()
-                elif action in "eE":
+                elif action in ["e", "east"]:
                     hero.go_east()
-                elif action in "sS":
+                elif action in ["s", "south"]:
                     hero.go_south()
-                elif action in "wW":
+                elif action in ["w", "west"]:
                     hero.go_west()
-                elif action in "uU":
+                elif action in ["u", "up"]:
                     hero.go_up()
-                elif action in "dD":
+                elif action in ["d", "down"]:
                     hero.go_down()
                 elif "treasure" in action:
                     hero.take(self.treasure)
