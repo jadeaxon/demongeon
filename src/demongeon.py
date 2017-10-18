@@ -73,7 +73,6 @@ class Situation(object):
         """Override default action handling.  Returns True if it does."""
         return False
 
-
 # Inheritance here is questionable.  Maybe a situation shoud have an optional location.
 class Location(Situation):
     """A `Situation` where the `Hero` is in a particular location."""
@@ -159,7 +158,6 @@ class Room(Location):
             ## print(e)
             pass
 
-    # TO DO: Extend entity percepts to z-axis.
     # TO DO: Factor into hero class.
     def describe_deathballs(self):
         """Describe each death ball relative to current hero location."""
@@ -167,8 +165,6 @@ class Room(Location):
         x, y, z = self.coordinate
         rooms = self.world.situations
         treasure = self.world.treasure
-
-        ## print(f"{globals()['DeathBall']}")
 
         # TO DO: There could be more than one.  Would be nice to know their color too.
         if self.contains_type(DeathBall):
