@@ -227,7 +227,7 @@ class TeleporterRoom(Room):
         size = self.world.size
         if action == "teleport":
             print("You magically teleport to another location.")
-            loc = (randint(0, size - 1), randint(0, size - 1), randint(0, size - 1))
+            loc = self.world._random_coordinate()
             self.world.situations[loc].add(self.world.hero)
             return True
         else:
@@ -282,15 +282,20 @@ class World(object):
         self._init_enemies()
         self._init_items()
 
+    def _random_coordinate(self):
+        """Return a random (x, y, z) coordinate tuple."""
+        x = randint(0, self.size - 1)
+        y = randint(0, self.size - 1)
+        z = randint(0, self.size - 1)
+        c = (x, y, z)
+        return c
+
     def _init_enemies(self):
         """Populate the game world with enemies."""
         # We start with some number of death balls in random rooms.
         for i in range(self.initial_death_balls):
             while True:
-                x = randint(0, self.size - 1)
-                y = randint(0, self.size - 1)
-                z = randint(0, self.size - 1)
-                c = (x, y, z)
+                c = self._random_coordinate()
                 ## print(f"x = {x}; y = {y}; z = {z}")
                 # Don't start with a death ball in the starting room.
                 situation = self.situations[c]
@@ -311,10 +316,7 @@ class World(object):
         # PRE: Hero has been created and placed in game world.
         # Now place the treasure.
         while True:
-            x = randint(0, self.size - 1)
-            y = randint(0, self.size - 1)
-            z = randint(0, self.size - 1)
-            c = (x, y, z)
+            c = self._random_coordinate()
             ## print(f"Placing treasure at ({x},{y},{z}).")
             # Don't start with the treasure in the starting room.
             situation = self.situations[c]
