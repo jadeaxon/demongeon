@@ -42,7 +42,6 @@ class Situation(object):
 
     def remove(self, entity):
         """Remove given `Entity` from this `Situation`."""
-        ## print(self.contents)
         self.contents.remove(entity)
 
     def contains(self, entity):
@@ -50,11 +49,9 @@ class Situation(object):
         if entity in self.contents: return True
         return False
 
-    # TO DO: Use _ names.
     def contains_type(self, entity_type):
         """Check if the `Situation` contains some exact type of `Entity`."""
         for entity in self.contents:
-            ## print(f"{entity.__class__} == {entity_type}")
             if entity.__class__ == entity_type: return True
         return False
 
