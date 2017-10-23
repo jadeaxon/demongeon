@@ -11,6 +11,11 @@ Welcome to Demongeon's documentation!
    :caption: Contents:
 
 
+.. Generate source docs for Demongeon.
+.. automodule:: demongeon
+    :members:
+    :undoc-members:
+    
 
 Indices and tables
 ==================
