@@ -10,12 +10,8 @@ Welcome to Demongeon's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   sourcedocs
 
-.. Generate source docs for Demongeon.
-.. automodule:: demongeon
-    :members:
-    :undoc-members:
-    
 
 Indices and tables
 ==================

@@ -38,13 +38,21 @@ version = (0, 0, 4) # Game version.
 class Situation(object):
     """A situation the hero can be in.  Usually this is just being at a location."""
     def __init__(self):
+        """Create a :class:`Situation` object."""
+
+        # The following is supposed to act as a doc comment.
+        #: The `Entity`s in this situation.
         self.contents = []
-        """ The `Entity`s in this situation. """
+
         self.world = None
         """ The `World` this situation is part of."""
 
     def add(self, entity):
-        """Add an `Entity` to this `Sitaution`."""
+        """Add an :class:`Entity` to this :class:`Sitaution`.
+
+        :param Entity entity: The Entity to add to this Situation.
+        :return: None
+        """
         # An entity can only belong to one situation at a time.
         if entity.situation:
             entity.situation.remove(entity)
