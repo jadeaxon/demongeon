@@ -66,18 +66,32 @@ class Situation(object):
         self.contents.remove(entity)
 
     def contains(self, entity):
-        """Check if given `Entity` is part of this `Situation`."""
+        """Check if given `Entity` is part of this `Situation`.
+
+        :return: True if entity in situation, False otherwise.
+        :rtype: boolean
+        """
         if entity in self.contents: return True
         return False
 
     def contains_type(self, entity_type):
-        """Check if the `Situation` contains some exact type of `Entity`."""
+        """Check if the `Situation` contains some exact type of `Entity`.
+
+        :param class entity_type: A class object for an :class:`Entity` subclass.
+        :return: True if an instance of given class exists, false otherwise.
+        :rtype: boolean
+        """
         for entity in self.contents:
             if entity.__class__ == entity_type: return True
         return False
 
     def get_entities(self, entity_type):
-        """Return a list of all entities in this situation of the given type."""
+        """Return a list of all entities in this situation of the given type.
+
+        :param class entity_type: A class object for an :class:`Entity` subclass.
+        :return: A list of all the entities of the exact given class.  Empty list if none.
+        :rtype: List of Entity
+        """
         entities = []
         for entity in self.contents:
             if entity.__class__ == entity_type: entities.append(entity)
