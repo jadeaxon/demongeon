@@ -14,6 +14,19 @@ inventory items, etc.  Each thing exists in a specific situation.
 
 Both abstractions are a bit questionable to me, but so far they are working
 well enough to create the game.
+
+.. testsetup:: *
+
+    from demongeon import *
+    e = Entity()
+
+>>> 1 + 1
+2
+
+>>> e.get_location()
+(-1, -1, -1)
+
+
 """
 
 from random import randint
